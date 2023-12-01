@@ -1,3 +1,4 @@
+from re import findall
 from runner.python import solve
 
 
@@ -10,10 +11,10 @@ def part2(input):
 
 
 solve(
-    part1=part1,
-    test1_input="abc",
-    test2_output="3",
-    # part2=part2,
-    # test2_expected="",
-    # test2_input="",
+    part1,
+    "",
+    1,
+    # part2,
+    # " ",
+    # 2,
 )

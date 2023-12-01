@@ -10,29 +10,32 @@ from urllib import request
 def solve(
     part1: Callable[[str], str],
     test1_input: str,
-    test2_output: str,
+    test1_output: str | int,
     part2: Callable[[str], str] | None = None,
     test2_input: str | None = None,
-    test2_expected: str | None = None,
+    test2_output: str | int | None = None,
 ):
     abs_path = os.path.abspath((inspect.stack()[1])[1])
     dir = os.path.dirname(abs_path)
-    if test1_input and test2_output:
-        test_1_answer = str(part1(test1_input))
-        if test_1_answer != test2_output:
-            raise Exception(
-                f"Wrong answer! Expected {test2_output}, got {test_1_answer}"
-            )
+    if test1_input and test1_output:
+        test_1_answer = part1(test1_input)
+        if test_1_answer != test1_output:
+            print(f"Part 1: Wrong answer! Expected {test1_output}, got {test_1_answer}")
+            return False
+        else:
+            print(f"Part 1: Right answer! Got {test_1_answer}")
     input_text = open(dir + "/input.txt").read().strip()
     attempt(part1(input_text), 1, dir)
     if not part2:
         return
-    if test2_input and test2_expected:
-        test_2_answer = str(part2(test2_input))
-        if test_2_answer != test2_expected:
-            raise Exception(
-                f"Wrong answer! Expected {test2_expected}, got {test_2_answer}"
-            )
+    if test2_input and test2_output:
+        test_2_answer = part2(test2_input)
+        if test_2_answer != test2_output:
+            print(f"Part 2: Wrong answer! Expected {test2_output}, got {test_2_answer}")
+            return False
+        else:
+            print(f"Part 2: Right answer! Got {test_1_answer}")
+
     attempt(part2(input_text), 2, dir)
 
 
@@ -66,9 +69,10 @@ def attempt(solution, part, dir):
             print(f"Part {part} correct!")
             return True
         else:
-            raise Exception(
+            print(
                 f"Wrong answer! Expected {solution_part['correctSolution']}, got {solution}"
             )
+            return False
 
     if solution in solution_part["attemptedSolutions"]:
         print("Already attempted this solution!")

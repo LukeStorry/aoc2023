@@ -6,11 +6,11 @@ import caller from "caller";
 config();
 
 type SolveArgs<T, TResult1, TResult2> = {
-  parser: (input: string) => T;
+  parser?: (input: string) => T;
   part1: (input: T, isTest?: boolean) => TResult1;
-  part2: (input: T, isTest?: boolean) => TResult2;
-  test1Input?: string;
-  test1Output?: TResult1;
+  test1Input: string;
+  test1Output: TResult1;
+  part2?: (input: T, isTest?: boolean) => TResult2;
   test2Input?: string;
   test2Output?: TResult2;
 };
@@ -49,9 +49,10 @@ export async function solve<T, TResult1, TResult2>({
   const part1Solved = solutionsFile.part1.correctSolution !== null;
   const part = part1Solved ? 2 : 1;
 
-  const [solver, test, testInput] = part1Solved
-    ? [part2, test2Output, test2Input]
-    : [part1, test1Output, test1Input];
+  const [solver, test, testInput] =
+    part1Solved && part2
+      ? [part2, test2Output, test2Input]
+      : [part1, test1Output, test1Input];
 
   if (test && testInput) {
     const parsedTestInput = parser(testInput);
