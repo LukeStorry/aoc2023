@@ -5,23 +5,20 @@ from runner.python import solve
 
 def parseGames(input: str):
     return [
-        [
-            (
-                int(next(iter(findall(r"(\d+) red", set)), 0)),
-                int(next(iter(findall(r"(\d+) green", set)), 0)),
-                int(next(iter(findall(r"(\d+) blue", set)), 0)),
-            )
-            for set in line.split(";")
-        ]
+        (
+            max(map(int, findall(r"(\d+) red", line))),
+            max(map(int, findall(r"(\d+) green", line))),
+            max(map(int, findall(r"(\d+) blue", line))),
+        )
         for line in input.split("\n")
     ]
 
 
 def part1(input: str):
+    games = parseGames(input)
     part1 = sum(
-        i + 1
-        for i, game in enumerate(parseGames(input))
-        if all(s[0] <= 12 and s[1] <= 13 and s[2] <= 14 for s in game)
+        i if (game[0] <= 12 and game[1] <= 13 and game[2] <= 14) else 0
+        for i, game in enumerate(games, 1)
     )
 
     return part1
@@ -29,7 +26,7 @@ def part1(input: str):
 
 def part2(input):
     games = parseGames(input)
-    part2 = sum(prod(max(s) for s in zip(*game)) for game in games)
+    part2 = sum(prod(g) for g in games)
     return part2
 
 
