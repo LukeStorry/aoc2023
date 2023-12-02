@@ -77,7 +77,7 @@ export async function solve<T, TResult1, TResult2>({
           answer === correctSolution ? "Matches" : "Does not match";
         console.log(`${prefix} correctly submitted ${correctSolution}!`);
       }
-      // continue;
+      continue;
     } else {
       attemptedSolutions.push(answer);
     }
