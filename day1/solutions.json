@@ -1,1 +1,10 @@
-{"part1":{"attemptedSolutions":["53334","53334","53334"],"correctSolution":"53334"},"part2":{"attemptedSolutions":["52834","52834","52834","52834","52834","52834","52834","52834"],"correctSolution":"52834"}}
+{
+  "part1": {
+    "attemptedSolutions": ["53334"],
+    "correctSolution": "53334"
+  },
+  "part2": {
+    "attemptedSolutions": ["52834"],
+    "correctSolution": "52834"
+  }
+}

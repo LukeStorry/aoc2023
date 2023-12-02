@@ -31,11 +31,13 @@ solve({
   part1: (lines) => sum(lines.map(getValue)),
   part2: (lines) => sum(lines.map(getValueWithWords)),
 
-  test1Input: "1abc2\npqr3stu8vwx\na1b2c3d4e5f\ntreb7uchet",
-  test1Output: 142,
-  test2Input:
-    "two1nine\neightwothree\nabcone2threexyz\nxtwone3four\n4nineeightseven2\nzoneight234\n7pqrstsixteen",
-  test2Output: 281,
+  part1Tests: [["1abc2\npqr3stu8vwx\na1b2c3d4e5f\ntreb7uchet", 142]],
+  part2Tests: [
+    [
+      "two1nine\neightwothree\nabcone2threexyz\nxtwone3four\n4nineeightseven2\nzoneight234\n7pqrstsixteen",
+      281,
+    ],
+  ],
 });
 
 /** Original bleary-eyed solution when I couldn't get the regex to work for part 2

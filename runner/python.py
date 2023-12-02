@@ -65,12 +65,12 @@ def attempt(solution, part, dir):
     solutions = json.loads(open(dir + "/solutions.json").read())
     solution_part = solutions[f"part{part}"]
     if solution_part["correctSolution"]:
-        if solution_part["correctSolution"] == solution:
+        if solution_part["correctSolution"] == str(solution):
             print(f"Part {part} correct!")
             return True
         else:
             print(
-                f"Wrong answer! Expected {solution_part['correctSolution']}, got {solution}"
+                f"Wrong final answer! Expected {solution_part['correctSolution']}, got {solution}"
             )
             return False
 
