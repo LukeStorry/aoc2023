@@ -1,93 +1,85 @@
 import { solve } from "../runner/typescript";
-import { max, sum, groupBy } from "lodash";
+import { sum } from "lodash";
 
-type NumberWithCoordinate = {
+type Coordinate = [number, number];
+type NumberWithCoordinates = {
   number: number;
-  coordinates: [number, number][];
+  coordinates: Coordinate[];
 };
-
+type CharWithCoordinate = {
+  char: string;
+  coordinate: Coordinate;
+};
 type ParseResult = {
-  lines: string[];
-  numbersWithCoordinates: NumberWithCoordinate[];
+  symbols: CharWithCoordinate[];
+  numbers: NumberWithCoordinates[];
 };
 
-function parser(input: string): ParseResult {
-  const lines = input.split("\n");
+function getNumbersFromLine(line: string, y: number): NumberWithCoordinates[] {
+  const numbers: NumberWithCoordinates[] = [];
+  let currentNumber = "";
+  let currentNumbersCoordinates: Coordinate[] = [];
 
-  const numbersWithCoordinates: NumberWithCoordinate[] = [];
+  line.split("").forEach((char, x) => {
+    if (/\d/.test(char)) {
+      currentNumber += char;
+      currentNumbersCoordinates.push([x, y]);
+    }
 
-  lines.forEach((line, y) => {
-    let currentNumber = "";
-    let currentNumbersCoordinates: [number, number][] = [];
-
-    line.split("").forEach((char, x) => {
-      if (/\d/.test(char)) {
-        currentNumber += char;
-        currentNumbersCoordinates.push([x, y]);
-      } else {
-        if (currentNumber !== "") {
-          numbersWithCoordinates.push({
-            number: Number(currentNumber),
-            coordinates: currentNumbersCoordinates,
-          });
-        }
-        currentNumber = "";
-        currentNumbersCoordinates = [];
-      }
-    });
-    // end of line - may still have a number!
-    if (currentNumber !== "") {
-      numbersWithCoordinates.push({
+    // Save number if next char or end of line
+    if (!/\d/.test(char) || x === line.length - 1) {
+      numbers.push({
         number: Number(currentNumber),
         coordinates: currentNumbersCoordinates,
       });
+      currentNumber = "";
+      currentNumbersCoordinates = [];
     }
   });
-  return { lines, numbersWithCoordinates };
+
+  return numbers;
 }
 
-function part1({ lines, numbersWithCoordinates }: ParseResult): number {
-  function isAdjacentToSymbol(x: number, y: number) {
-    const neighbors =
-      (lines[y - 1]?.[x - 1] ?? "") +
-      (lines[y - 1]?.[x] ?? "") +
-      (lines[y - 1]?.[x + 1] ?? "") +
-      (lines[y]?.[x - 1] ?? "") +
-      (lines[y]?.[x + 1] ?? "") +
-      (lines[y + 1]?.[x - 1] ?? "") +
-      (lines[y + 1]?.[x] ?? "") +
-      (lines[y + 1]?.[x + 1] ?? "");
+function getSymbolsFromLine(line: string, y: number): CharWithCoordinate[] {
+  return line
+    .split("")
+    .map((char, x) => ({ char, coordinate: [x, y] as Coordinate }))
+    .filter(({ char }) => /[^0-9.]/.test(char));
+}
 
-    return /[^0-9.]/.test(neighbors);
-  }
+function parser(input: string): ParseResult {
+  const lines = input.split("\n");
+  const symbols = lines.flatMap(getSymbolsFromLine);
+  const numbers = lines.flatMap(getNumbersFromLine);
+  return { symbols, numbers };
+}
 
-  const numbersAdjacentToSymbols = numbersWithCoordinates
-    .filter((n) => n.coordinates.some(([x, y]) => isAdjacentToSymbol(x, y)))
+function isAdjacent(a: Coordinate, bs: Coordinate[]) {
+  return bs.some(
+    (b) => Math.abs(a[0] - b[0]) <= 1 && Math.abs(a[1] - b[1]) <= 1
+  );
+}
+
+function part1({ numbers, symbols }: ParseResult) {
+  const numbersAdjacentToSymbols = numbers
+    .filter(({ coordinates: number }) =>
+      symbols.some(({ coordinate: symbol }) => isAdjacent(symbol, number))
+    )
     .map(({ number }) => number);
 
   return sum(numbersAdjacentToSymbols);
 }
 
-function part2({ lines, numbersWithCoordinates }: ParseResult): any {
-  const gearRatios = [];
-  lines.forEach((line, y) => {
-    line.split("").forEach((char, x) => {
-      if (char === "*") {
-        const nearbyNumbers = numbersWithCoordinates.filter(({ coordinates }) =>
-          coordinates.some(
-            ([x2, y2]) => Math.abs(x2 - x) <= 1 && Math.abs(y2 - y) <= 1
-          )
-        );
-        if (nearbyNumbers.length > 1) {
-          const gearRatio = nearbyNumbers
-            .map(({ number }) => number)
-            .reduce((a, b) => a * b);
-
-          gearRatios.push(gearRatio);
-        }
-      }
-    });
-  });
+function part2({ symbols, numbers }: ParseResult) {
+  const gearRatios = symbols
+    .filter(({ char }) => char === "*")
+    .map(({ coordinate: gear }) =>
+      numbers.filter(({ coordinates: number }) => isAdjacent(gear, number))
+    )
+    .filter((numbers) => numbers.length == 2)
+    .map((nearbyNumbers) =>
+      nearbyNumbers.map(({ number }) => number).reduce((a, b) => a * b)
+    );
 
   return sum(gearRatios);
 }
