@@ -20,10 +20,12 @@ def solve(
     if test1_input and test1_output:
         test_1_answer = part1(test1_input)
         if test_1_answer != test1_output:
-            print(f"Part 1: Wrong answer! Expected {test1_output}, got {test_1_answer}")
+            print(
+                f"Part 1: Wrong test answer! Expected {test1_output}, got {test_1_answer}"
+            )
             return False
         else:
-            print(f"Part 1: Right answer! Got {test_1_answer}")
+            print(f"Part 1: Right test answer! Got {test_1_answer}")
     input_text = open(dir + "/input.txt").read().strip()
     attempt(part1(input_text), 1, dir)
     if not part2:
@@ -31,10 +33,12 @@ def solve(
     if test2_input and test2_output:
         test_2_answer = part2(test2_input)
         if test_2_answer != test2_output:
-            print(f"Part 2: Wrong answer! Expected {test2_output}, got {test_2_answer}")
+            print(
+                f"Part 2: Wrong test answer! Expected {test2_output}, got {test_2_answer}"
+            )
             return False
         else:
-            print(f"Part 2: Right answer! Got {test_1_answer}")
+            print(f"Part 2: Right test answer! Got {test_1_answer}")
 
     attempt(part2(input_text), 2, dir)
 

@@ -58,7 +58,8 @@ export async function solve<T, TResult1, TResult2>({
         return;
       }
     }
-    console.log(`Tests passed for day ${day} part ${part}`);
+
+    console.log(`${tests.length} tests passed for day ${day} part ${part}`);
 
     const input = parser(read(`${dir}/input.txt`));
     const answer = solver(input, false)?.toString();
