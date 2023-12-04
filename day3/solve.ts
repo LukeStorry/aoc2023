@@ -7,42 +7,46 @@ type Symbol = { char: string; coordinate: Coordinate };
 type ParseResult = { symbols: Symbol[]; parts: Part[] };
 
 /** Original looping parser */
-// function parser(input: string): ParseResult {
-//   const lines = input.split("\n");
-//   const symbols = lines.flatMap((line: string, y: number): Symbol[] => {
-//     return line
-//       .split("")
-//       .map((char, x) => ({ char, coordinate: { x, y } }))
-//       .filter(({ char }) => /[^0-9.]/.test(char));
-//   });
+function lineParser(line: string, y: number): Part[] {
+  const parts: Part[] = [];
 
-//   const parts = lines.flatMap((line: string, y: number): Part[] => {
-//     const parts: Part[] = [];
-//     let currentPartNumber = "";
-//     let currentPartCoordinates: Coordinate[] = [];
+  let currentPartNumber = "";
+  let currentPartCoordinates: Coordinate[] = [];
+  line.split("").forEach((char: string, x: number) => {
+    if (/\d/.test(char)) {
+      currentPartNumber += char;
+      currentPartCoordinates.push({ x, y });
+    }
 
-//     line.split("").forEach((char, x) => {
-//       if (/\d/.test(char)) {
-//         currentPartNumber += char;
-//         currentPartCoordinates.push({ x, y });
-//       }
+    // Save number if next char or end of line
+    if (!!currentPartNumber && (!/\d/.test(char) || x === line.length - 1)) {
+      parts.push({
+        number: Number(currentPartNumber),
+        coordinates: currentPartCoordinates,
+      });
+      currentPartNumber = "";
+      currentPartCoordinates = [];
+    }
+  });
 
-//       // Save number if next char or end of line
-//       if (!!currentPartNumber && (!/\d/.test(char) || x === line.length - 1)) {
-//         parts.push({
-//           number: Number(currentPartNumber),
-//           coordinates: currentPartCoordinates,
-//         });
-//         currentPartNumber = "";
-//         currentPartCoordinates = [];
-//       }
-//     });
-//     return parts;
-//   });
-//   return { symbols, parts };
-// }
+  return parts;
+}
 
-/** Alternative Regex version of above function */
+/** Original looping parser */
+function parser(input: string): ParseResult {
+  const lines = input.split("\n");
+  const symbols = lines.flatMap((line: string, y: number): Symbol[] => {
+    return line
+      .split("")
+      .map((char, x) => ({ char, coordinate: { x, y } }))
+      .filter(({ char }) => /[^0-9.]/.test(char));
+  });
+
+  const parts = lines.flatMap(lineParser);
+  return { symbols, parts };
+}
+
+/** Alternative Regex version of above functions */
 function regexParser(input: string): ParseResult {
   const width = input.indexOf("\n");
   return Array.from(input.matchAll(/([0-9]+)|([^0-9.\n])|\n/gm)).reduce(
