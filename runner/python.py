@@ -8,10 +8,10 @@ from urllib import request
 
 
 def solve(
-    part1: Callable[[str], str],
+    part1: Callable[[str], str | int],
     test1_input: str,
     test1_output: str | int,
-    part2: Callable[[str], str] | None = None,
+    part2: Callable[[str], str | int] | None = None,
     test2_input: str | None = None,
     test2_output: str | int | None = None,
 ):

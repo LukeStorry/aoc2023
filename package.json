@@ -9,9 +9,11 @@
   "private": false,
   "scripts": {
     "setup": "ts-node ./runner/setup.ts",
+    "start": "yarn typescript",
     "typescript": "ts-node ./runner/advent.ts",
     "python": "python3 ./runner/advent.py",
-    "start": "yarn typescript"
+    "wt": "watch 'yarn typescript' .",
+    "wp": "watch 'yarn python' ."
   },
   "dependencies": {
     "dotenv": "^16.0.3",

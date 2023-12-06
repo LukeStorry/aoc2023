@@ -1,7 +1,8 @@
-import { readFileSync, writeFileSync } from "fs";
-import { config } from "dotenv";
-import { dirname } from "path";
 import caller from "caller";
+import { config } from "dotenv";
+import { readFileSync, writeFileSync } from "fs";
+import { dirname } from "path";
+import { exit } from "process";
 
 config();
 
@@ -60,7 +61,7 @@ export async function solve<T, TResult1, TResult2>({
     }
 
     console.log(`${tests.length} tests passed for day ${day} part ${part}`);
-
+    // exit();
     const input = parser(read(`${dir}/input.txt`));
     const answer = solver(input, false)?.toString();
 
