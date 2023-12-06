@@ -1,0 +1,15 @@
+{
+  "part1": {
+    "attemptedSolutions": [
+      "781200"
+    ],
+    "correctSolution": "781200"
+  },
+  "part2": {
+    "attemptedSolutions": [
+      "63,78,94,68,411,1274,2047,1035",
+      "49240091"
+    ],
+    "correctSolution": "49240091"
+  }
+}
