@@ -60,7 +60,9 @@ export async function solve<T, TResult1, TResult2>({
       }
     }
 
-    console.log(`${tests.length} tests passed for day ${day} part ${part}`);
+    console.log(
+      `${tests?.length ?? 0} tests passed for day ${day} part ${part}`
+    );
     // exit();
     const input = parser(read(`${dir}/input.txt`));
     const answer = solver(input, false)?.toString();
@@ -113,6 +115,18 @@ async function checkAnswer(part: number, day: string, answer: string) {
   if (body.includes(" already complete ")) {
     console.log("Something's gone wrone - this part is already complete!?");
     return false;
+  }
+  if (body.includes("too recently")) {
+    console.error(`RETRY SUBMITTING`);
+    console.error(`RETRY SUBMITTING`);
+    console.error(`RETRY SUBMITTING`);
+    console.error(`RETRY SUBMITTING`);
+    console.error(`RETRY SUBMITTING`);
+    console.error(`RETRY SUBMITTING`);
+    console.error(`RETRY SUBMITTING`);
+    console.error(`RETRY SUBMITTING`);
+    return false;
+    throw new Error(`Wait before submitting\n${body}`);
   }
   if (body.includes("not the right answer")) {
     console.log(`Wrong answer\n${body}`);
