@@ -88,24 +88,43 @@ function part1(hands: Hand[]) {
   return sum(winnings);
 }
 
-// function part2(hands: Hand[]) {
-//   const sortedHands = hands.sort(compare);
-//   // console.log(sortedHands);
-//   const winnings = sortedHands.map((hand, i) => {
-//     console.log(i+1, hand.cards, getType(hand.cards));
-//     return hand.bid * (i + 1);
-//   });
-//   return sum(winnings);
-// }
+function replaceJokers(hand: Hand) {
+  if (!hand.cards.includes("J")) return;
+
+  let possibilities = [hand.cards];
+  while (possibilities.some((c) => c.includes("J"))) {
+    const previous = possibilities.shift();
+    const replacedIndex = previous.indexOf("J");
+    for (const card of cardOrder) {
+      if (card === "J") continue;
+      const replaced = previous.replace("J", card);
+      possibilities.push({cards, });
+    }
+  }
+
+  const sortedHands = possibilities
+    .map((cards) => ({ cards }))
+    .toSorted(compare);
+  const bestPossibility = sortedHands.at(-1);
+  hand.cards = bestPossibility.cards;
+}
+
+function part2(hands: Hand[]) {
+  hands.forEach(replaceJokers);
+  const sortedHands = hands.sort(compare);
+  const winnings = sortedHands.map((hand, i) => {
+    console.log(i + 1, hand.cards, getType(hand.cards));
+    return hand.bid * (i + 1);
+  });
+  // const winnings = sortedHands.map(({ bid }, i) => bid * (i + 1));
+  return sum(winnings);
+}
 
 solve({
   parser: parser,
   // part1: part1,
-  part2: part2,
+  part2,
 
-  part1Tests: [["32T3K 765\nT55J5 684\nKK677 28\nKTJJT 220\nQQQJA 483", 6440]],
-  part2Tests: [
-    // ["aaa", 0],
-    // ["a", 0],
-  ],
+  // part1Tests: [["32T3K 765\nT55J5 684\nKK677 28\nKTJJT 220\nQQQJA 483", 6440]],
+  // part2Tests: [["32T3K 765\nT55J5 684\nKK677 28\nKTJJT 220\nQQQJA 483", 5905]],
 });
