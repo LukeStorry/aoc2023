@@ -3,7 +3,8 @@ import { max, sum, groupBy, countBy, range } from "lodash";
 
 type Hand = {
   cards: string;
-  bid?: number;
+  bid: number;
+  originalCards?: string;
 };
 
 const cardOrder = [
@@ -20,7 +21,7 @@ const cardOrder = [
   "4",
   "3",
   "2",
-  "J",
+  "*",
 ];
 
 const typeOrders = [
@@ -63,19 +64,22 @@ function getType(cards: string): Type {
   }
 }
 
-// positive if a wins
-function compare({ cards: cardsA }: Hand, { cards: cardsB }: Hand): number {
-  const typeA = getType(cardsA);
-  const typeB = getType(cardsB);
+// positive if A wins, negatie if B
+function compare(handA: Hand, handB: Hand): number {
+  const typeA = getType(handA.cards);
+  const typeB = getType(handB.cards);
   const typeOrderA = typeOrders.indexOf(typeA);
   const typeOrderB = typeOrders.indexOf(typeB);
 
   if (typeOrderA < typeOrderB) return 1;
   if (typeOrderA > typeOrderB) return -1;
 
+  // Tiebreakers
+  const originalA = handA.originalCards ?? handA.cards;
+  const originalB = handB.originalCards ?? handB.cards;
   for (let i = 0; i < cardOrder.length; i++) {
-    const rankA = cardOrder.indexOf(cardsA[i]);
-    const rankB = cardOrder.indexOf(cardsB[i]);
+    const rankA = cardOrder.indexOf(originalA[i]);
+    const rankB = cardOrder.indexOf(originalB[i]);
     if (rankA < rankB) return 1;
     if (rankA > rankB) return -1;
   }
@@ -84,34 +88,32 @@ function compare({ cards: cardsA }: Hand, { cards: cardsB }: Hand): number {
 
 function part1(hands: Hand[]) {
   const sortedHands = hands.sort(compare);
-  const winnings = sortedHands.map(({ bid }, i) => bid * (i + 1));
+  const winnings = sortedHands.map((hand, i) => {
+    console.log(i + 1, hand.cards, getType(hand.cards));
+    return hand.bid * (i + 1);
+  });
   return sum(winnings);
 }
 
 function replaceJokers(hand: Hand) {
-  if (!hand.cards.includes("J")) return;
+  if (!hand.cards.includes("J")) return hand;
 
-  let possibilities = [hand.cards];
-  while (possibilities.some((c) => c.includes("J"))) {
-    const previous = possibilities.shift();
-    const replacedIndex = previous.indexOf("J");
-    for (const card of cardOrder) {
-      if (card === "J") continue;
-      const replaced = previous.replace("J", card);
-      possibilities.push({cards, });
-    }
-  }
+  const originalCards = hand.cards.replaceAll("J", "*");
+  const possibilities = cardOrder
+    .filter((c) => c !== "J")
+    .map((card) => hand.cards.replaceAll("J", card));
 
   const sortedHands = possibilities
-    .map((cards) => ({ cards }))
+    .map((cards) => ({ ...hand, cards, originalCards }))
     .toSorted(compare);
   const bestPossibility = sortedHands.at(-1);
-  hand.cards = bestPossibility.cards;
+
+  return bestPossibility;
 }
 
 function part2(hands: Hand[]) {
-  hands.forEach(replaceJokers);
-  const sortedHands = hands.sort(compare);
+  const replaced = hands.map(replaceJokers);
+  const sortedHands = replaced.sort(compare);
   const winnings = sortedHands.map((hand, i) => {
     console.log(i + 1, hand.cards, getType(hand.cards));
     return hand.bid * (i + 1);
@@ -122,9 +124,9 @@ function part2(hands: Hand[]) {
 
 solve({
   parser: parser,
-  // part1: part1,
+  part1: part1,
   part2,
 
-  // part1Tests: [["32T3K 765\nT55J5 684\nKK677 28\nKTJJT 220\nQQQJA 483", 6440]],
-  // part2Tests: [["32T3K 765\nT55J5 684\nKK677 28\nKTJJT 220\nQQQJA 483", 5905]],
+  part1Tests: [["32T3K 765\nT55J5 684\nKK677 28\nKTJJT 220\nQQQJA 483", 6440]],
+  part2Tests: [["32T3K 765\nT55J5 684\nKK677 28\nKTJJT 220\nQQQJA 483", 5905]],
 });

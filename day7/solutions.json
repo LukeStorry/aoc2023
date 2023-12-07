@@ -15,8 +15,11 @@
   },
   "part2": {
     "attemptedSolutions": [
-      "248396258"
+      "248396258",
+      "246222607",
+      "246415681",
+      "246436046"
     ],
-    "correctSolution": null
+    "correctSolution": "246436046"
   }
 }
