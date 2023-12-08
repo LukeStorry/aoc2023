@@ -10,11 +10,11 @@ function parser(input: string): P {
     .split("")
     .map((lr) => (lr === "L" ? 0 : 1));
 
-  const elements = Array.from(input.matchAll(/(\w{3}).*(\w{3}).*(\w{3})/g)).map(
+  const nodeMatches = input.matchAll(/(\w{3}).*(\w{3}).*(\w{3})/g);
+  const nodes = Array.from(nodeMatches).map(
     ([_, name, left, right]) => [name, [left, right]] as const
   );
-
-  const nodesMap = new Map(elements);
+  const nodesMap = new Map(nodes);
 
   return { directions, nodesMap };
 }
@@ -31,13 +31,20 @@ function part1({ directions, nodesMap }: P): number {
 }
 
 function part2({ directions, nodesMap }: P): number {
-  return 0;
+  let step = 0;
+  let currentNodes = Array.from(nodesMap.keys()).filter((n) => n.endsWith("A"));
+  while (currentNodes.some((n) => !n.endsWith("Z"))) {
+    const direction = directions[step % directions.length];
+    currentNodes = currentNodes.map((n) => nodesMap.get(n)[direction]);
+    step++;
+  }
+  return step;
 }
 
 solve({
   parser: parser,
   part1: part1,
-  // part2: part2,
+  part2: part2,
 
   part1Tests: [
     ["RL\n\nAAA = (BBB, CCC)\nBBB = (DDD, EEE)\nCCC = (ZZZ, GGG)", 2],
