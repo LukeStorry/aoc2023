@@ -6,7 +6,9 @@
     "correctSolution": "12599"
   },
   "part2": {
-    "attemptedSolutions": [],
-    "correctSolution": null
+    "attemptedSolutions": [
+      "8245452805243"
+    ],
+    "correctSolution": "8245452805243"
   }
 }
