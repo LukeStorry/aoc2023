@@ -70,7 +70,7 @@ def attempt(solution, part, dir):
     solution_part = solutions[f"part{part}"]
     if solution_part["correctSolution"]:
         if solution_part["correctSolution"] == str(solution):
-            print(f"Part {part} correct!")
+            print(f"Part {part} correct {solution}!")
             return True
         else:
             print(
