@@ -11,24 +11,14 @@ def parse(input: str) -> list[tuple[int, int]]:
   ]
 
 
-def find_distance(
-  stars: list[tuple[int, int]], expansion: int
-) -> int:
-  xs, ys = set(x for x, _ in stars), set(y for _, y in stars)
+def find_distance(stars: list[tuple[int, int]], expansion: int) -> int:
+  xs, ys = {x for x, _ in stars}, {y for _, y in stars}
 
   return sum(
     abs(by - ay)
     + abs(bx - ax)
-    + sum(
-      (expansion - 1)
-      for y in range(min(ay, by), max(ay, by))
-      if y not in ys
-    )
-    + sum(
-      (expansion - 1)
-      for x in range(min(ax, bx), max(ax, bx))
-      if x not in xs
-    )
+    + (expansion - 1) * len(set(range(ay, by)) - ys)
+    + (expansion - 1) * len(set(range(*sorted([ax, bx]))) - xs)
     for (ax, ay), (bx, by) in combinations(stars, 2)
   )
 
