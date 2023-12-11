@@ -38,7 +38,7 @@ def solve(
             )
             return False
         else:
-            print(f"Part 2: Right test answer! Got {test_1_answer}")
+            print(f"Part 2: Right test answer! Got {test_2_answer}")
 
     attempt(part2(input_text), 2, dir)
 
