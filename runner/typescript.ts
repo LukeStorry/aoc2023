@@ -59,10 +59,10 @@ export async function solve<T, TResult1, TResult2>({
         return;
       }
     }
-
     console.log(
-      `${tests?.length ?? 0} tests passed for day ${day} part ${part}`
+      `${tests.length || "NO"} tests passed for day ${day} part ${part}`
     );
+
     // exit();
     const input = parser(read(`${dir}/input.txt`));
     const answer = solver(input, false)?.toString();
