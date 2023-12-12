@@ -39,10 +39,6 @@ export async function solve<T, TResult1, TResult2>({
   const dir = dirname(caller());
   const day = dir.replace(/.*day/, "");
 
-  const solutionsFile = JSON.parse(
-    readFileSync(`${dir}/solutions.json`, "utf8")
-  ) as Solutions;
-
   for (const [part, solver, tests] of [
     [1, part1, part1Tests],
     [2, part2, part2Tests],
@@ -69,6 +65,9 @@ export async function solve<T, TResult1, TResult2>({
 
     console.log(`Final answer: ${answer}`);
 
+    const solutionsFile = JSON.parse(
+      readFileSync(`${dir}/solutions.json`, "utf8")
+    ) as Solutions;
     const { attemptedSolutions, correctSolution } =
       solutionsFile[`part${part}`];
 

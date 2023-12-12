@@ -27,7 +27,7 @@ def solve(
         else:
             print(f"Part 1: Right test answer! Got {test_1_answer}")
     input_text = open(dir + "/input.txt").read().strip()
-    attempt(part1(input_text), 1, dir)
+    attempt(str(part1(input_text)), 1, dir)
     if not part2:
         return
     if test2_input and test2_output:
@@ -40,7 +40,7 @@ def solve(
         else:
             print(f"Part 2: Right test answer! Got {test_2_answer}")
 
-    attempt(part2(input_text), 2, dir)
+    attempt(str(part2(input_text)), 2, dir)
 
 
 def get_session():
