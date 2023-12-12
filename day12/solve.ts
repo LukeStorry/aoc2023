@@ -12,9 +12,6 @@ function parser(input: string) {
   return result;
 }
 
-const test = countArrangements(["?###????????", [3, 2, 1]]);
-console.log(test);
-
 function isValid(springs: string, groups: readonly number[]): boolean {
   const total = springs.split("").filter((s) => s === "#").length;
   if (total !== sum(groups)) return false;
@@ -44,30 +41,41 @@ function isValid(springs: string, groups: readonly number[]): boolean {
 function countArrangements([springs, groups]: Row): number {
   const maxDamanged = sum(groups);
   const maxOperational = springs.length - maxDamanged;
-  const found = [];
-  const queue = [springs];
-  while (queue.length > 0) {
-    const current = queue.shift();
+  let count = 0;
 
-    const countDamaged = current.split("#").length - 1;
-    if (countDamaged > maxDamanged) continue;
-    const countOperational = current.split(".").length - 1;
-    if (countOperational > maxOperational) continue;
+  function dfs(
+    index: number,
+    damaged: number,
+    operational: number,
+    current: string
+  ) {
+    if (index === springs.length) {
+      if (isValid(current, groups)) count++;
+      return;
+    }
 
-    if (current.includes("?")) {
-      queue.push(current.replace("?", "#"));
-      queue.push(current.replace("?", "."));
+    if (springs[index] === "?") {
+      if (damaged < maxDamanged)
+        dfs(index + 1, damaged + 1, operational, current + "#");
+      if (operational < maxOperational)
+        dfs(index + 1, damaged, operational + 1, current + ".");
     } else {
-      if (isValid(current, groups)) found.push(current);
+      dfs(
+        index + 1,
+        damaged + (springs[index] === "#" ? 1 : 0),
+        operational + (springs[index] === "." ? 1 : 0),
+        current + springs[index]
+      );
     }
   }
-  console.log(found.length);
-  return found.length;
+
+  dfs(0, 0, 0, "");
+  console.log(count);
+  return count;
 }
 
 function part1(rows: Row[]): number {
   const totals = rows.map(countArrangements);
-  console.log({ totals });
   return sum(totals);
 }
 
@@ -81,17 +89,15 @@ function part2(rows: Row[]): number {
         ] as const
     )
     .map(countArrangements);
-  console.log({ totals });
   return sum(totals);
 }
 
 const testInput =
   "???.### 1,1,3\n.??..??...?##. 1,1,3\n?#?#?#?#?#?#?#? 1,3,1,6\n????.#...#... 4,1,1\n????.######..#####. 1,6,5\n?###???????? 3,2,1";
 solve({
-  parser: parser,
-  part1: part1,
-  // part2: part2,
-
+  parser,
+  part1,
+  part2,
   part1Tests: [[testInput, 21]],
   part2Tests: [[testInput, 525152]],
 });
