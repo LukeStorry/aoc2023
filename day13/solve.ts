@@ -14,7 +14,7 @@ function getMirror(
   if (direction === "horizontal") {
     grid = grid[0].map((_, i) => grid.map((line) => line[i]));
   }
-  const possiblePerLine = grid.map((line) =>
+  const allPossible = grid.map((line) =>
     line
       .map((_, i) => {
         const left = line.slice(i - Math.min(i, line.length - i), i).join("");
@@ -24,8 +24,8 @@ function getMirror(
       .filter(Boolean)
   );
 
-  return possiblePerLine[0].find((m) =>
-    possiblePerLine.every((set) => set.includes(m) && m !== ignore)
+  return allPossible[0].find((m) =>
+    allPossible.every((set) => set.includes(m) && m !== ignore)
   );
 }
 
