@@ -4,7 +4,7 @@
     "correctSolution": "108144"
   },
   "part2": {
-    "attemptedSolutions": [],
-    "correctSolution": null
+    "attemptedSolutions": ["101141", "135838", "135837", "188311", "108404"],
+    "correctSolution": "108404"
   }
 }
