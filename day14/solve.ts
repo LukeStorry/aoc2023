@@ -27,7 +27,7 @@ function part1(grid: Grid): number {
     }
   }
   const rollable = getRollable(grid);
-  console.log(rollable);
+  // console.log(rollable);
   rollable.forEach(([x, y, cell]) => rollNorth(x, y));
   const load = sum(getRollable(grid).map(([x, y, cell]) => grid.length - y));
 
@@ -42,22 +42,64 @@ function getRollable(grid: Grid) {
     .filter(Boolean);
 }
 
-function part2(values: any[]): any[] {
-  function func2(a) {
-    return a;
+function part2(grid: Grid): number {
+  function rollNorth(x: number, y: number) {
+    while (grid[y - 1]?.[x] == ".") {
+      grid[y][x] = ".";
+      grid[y - 1][x] = "O";
+      y--;
+    }
+  }
+  function rollEast(x: number, y: number) {
+    while (grid[y]?.[x + 1] == ".") {
+      grid[y][x] = ".";
+      grid[y][x + 1] = "O";
+      x++;
+    }
+  }
+  function rollWest(x: number, y: number) {
+    while (grid[y]?.[x - 1] == ".") {
+      grid[y][x] = ".";
+      grid[y][x - 1] = "O";
+      x--;
+    }
+  }
+  function rollSouth(x: number, y: number) {
+    while (grid[y + 1]?.[x] == ".") {
+      grid[y][x] = ".";
+      grid[y + 1][x] = "O";
+      y++;
+    }
   }
 
-  const out1 = func2(values[0]);
+  const rollable = getRollable(grid);
+  for (let cycle = 0; cycle < 1000000000; cycle++) {
+    getRollable(grid).forEach(([x, y, cell]) => rollNorth(x, y));
+    getRollable(grid).forEach(([x, y, cell]) => rollNorth(x, y));
+    getRollable(grid).forEach(([x, y, cell]) => rollWest(x, y));
+    getRollable(grid).forEach(([x, y, cell]) => rollWest(x, y));
+    getRollable(grid).forEach(([x, y, cell]) => rollWest(x, y));
+    getRollable(grid).forEach(([x, y, cell]) => rollSouth(x, y));
+    getRollable(grid).forEach(([x, y, cell]) => rollSouth(x, y));
+    getRollable(grid).forEach(([x, y, cell]) => rollSouth(x, y));
+    getRollable(grid).forEach(([x, y, cell]) => rollEast(x, y));
+    getRollable(grid).forEach(([x, y, cell]) => rollEast(x, y));
+    getRollable(grid).forEach(([x, y, cell]) => rollEast(x, y));
+    if (cycle % 10000 == 0)
+      console.log(
+        sum(getRollable(grid).map(([x, y, cell]) => grid.length - y))
+      );
+  }
+  rollable.forEach(([x, y, cell]) => rollNorth(x, y));
+  const load = sum(getRollable(grid).map(([x, y, cell]) => grid.length - y));
 
-  console.log(out1);
-
-  return values.map(func2);
+  return load;
 }
 
 solve({
   parser,
-  part1,
-  // part2: part2,
+  // part1,
+  part2,
 
   part1Tests: [
     [
@@ -66,7 +108,9 @@ solve({
     ],
   ],
   part2Tests: [
-    // ["aaa", 0],
-    // ["a", 0],
+    // [
+    //   "O....#....\nO.OO#....#\n.....##...\nOO.#O....O\n.O.....O#.\nO.#..O.#.#\n..O..#O..O\n.......O..\n#....###..\n#OO..#....",
+    //   64,
+    // ],
   ],
 });
