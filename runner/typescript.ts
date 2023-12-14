@@ -9,9 +9,10 @@ config();
 type SolveArgs<T, TResult1, TResult2> = {
   parser?: (input: string) => T;
   part1?: (input: T, isTest?: boolean) => TResult1;
-  part1Tests?: [string, TResult1][];
+  testInput?: string;
+  part1Tests?: [string | null, TResult1][];
   part2?: (input: T, isTest?: boolean) => TResult2;
-  part2Tests?: [string, TResult2][];
+  part2Tests?: [string | null, TResult2][];
 };
 
 type Solutions = {
@@ -33,6 +34,7 @@ export async function solve<T, TResult1, TResult2>({
   part1,
   part1Tests,
   part2,
+  testInput,
   part2Tests,
   parser = (x) => x as T,
 }: SolveArgs<T, TResult1, TResult2>) {
@@ -45,8 +47,8 @@ export async function solve<T, TResult1, TResult2>({
   ] as const) {
     if (!solver) continue;
 
-    for (const [testInput, testExpectedOutput] of tests || []) {
-      const parsedTestInput = parser(testInput);
+    for (const [specificTestInput, testExpectedOutput] of tests || []) {
+      const parsedTestInput = parser(specificTestInput ?? testInput);
       const testOutput = solver(parsedTestInput, true)?.toString();
       if (testOutput !== testExpectedOutput.toString()) {
         console.error(
