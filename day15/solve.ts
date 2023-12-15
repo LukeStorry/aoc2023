@@ -11,26 +11,24 @@ function part1(input: string) {
 }
 
 function part2(input: string) {
+  const lenses = input.split(",").map((step) => step.split(/-|=/));
   const boxes = range(256).map(() => []);
 
-  for (const step of input.split(",")) {
-    const [label, focalLength] = step.split(/-|=/);
+  for (const lens of lenses) {
+    const [label, focalLength] = lens;
     const boxIndex = hash(label);
-
     if (!focalLength) {
       boxes[boxIndex] = boxes[boxIndex].filter(([l]) => l !== label);
-      continue;
+    } else {
+      let slotIndex = boxes[boxIndex].findIndex(([l]) => l === label);
+      if (slotIndex === -1) slotIndex = boxes[boxIndex].length;
+      boxes[boxIndex][slotIndex] = lens;
     }
-
-    let slotIndex = boxes[boxIndex].findIndex(([l]) => l === label);
-    if (slotIndex === -1) slotIndex = boxes[boxIndex].length;
-    boxes[boxIndex][slotIndex] = [label, Number(focalLength)];
   }
 
-  const boxPowers = boxes.map((slots, boxIndex) => {
-    const slotPowers = slots.map(([, focalLength], i) => focalLength * (i + 1));
-    return (boxIndex + 1) * sum(slotPowers);
-  });
+  const boxPowers = boxes.map(
+    (slots, i) => (i + 1) * sum(slots.map(([, f], i) => f * (i + 1)))
+  );
   return sum(boxPowers);
 }
 
