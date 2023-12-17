@@ -1,7 +1,7 @@
-import { printGrid } from "../day16/printGrid";
 import { solve } from "../runner/typescript";
-import { max, sum, groupBy, min } from "lodash";
+import PriorityQueue from "ts-priority-queue";
 
+type Grid = number[][];
 type Node = {
   x: number;
   y: number;
@@ -10,102 +10,77 @@ type Node = {
   steps: number;
   heat: number;
 };
-function getNextSteps(node: Node, map: number[][]): Node[] {
-  const potentialNextSteps: Node[] = [];
 
-  // Continue straight
-  if (node.steps < 3) {
-    potentialNextSteps.push({
-      x: node.x + node.dx,
-      y: node.y + node.dy,
-      dx: node.dx,
-      dy: node.dy,
-      steps: node.steps + 1,
-      heat: node.heat + map[node.y + node.dy]?.[node.x + node.dx],
-    });
+function getNextSteps(
+  node: Node,
+  grid: Grid,
+  canContinue: (node: Node) => boolean,
+  canTurn: (node: Node) => boolean
+): Node[] {
+  function create(dx, dy, steps) {
+    const [x, y] = [node.x + dx, node.y + dy];
+    if (!grid[y]?.[x]) return null;
+    const heat = node.heat + grid[y][x];
+    return { x, y, dx, dy, steps, heat };
   }
-
-  // Turn left
-  potentialNextSteps.push({
-    x: node.x - node.dy,
-    y: node.y + node.dx,
-    dx: -node.dy,
-    dy: node.dx,
-    steps: 1,
-    heat: node.heat + map[node.y + node.dx]?.[node.x - node.dy],
-  });
-
-  // Turn right
-  potentialNextSteps.push({
-    x: node.x + node.dy,
-    y: node.y - node.dx,
-    dx: node.dy,
-    dy: -node.dx,
-    steps: 1,
-    heat: node.heat + map[node.y - node.dx]?.[node.x + node.dy],
-  });
-
-  return potentialNextSteps.filter(
-    (node) =>
-      node.x >= 0 &&
-      node.x < map[0].length &&
-      node.y >= 0 &&
-      node.y < map.length
-  );
+  return [
+    canContinue(node) ? create(node.dx, node.dy, node.steps + 1) : null,
+    canTurn(node) ? create(-node.dy, node.dx, 1) : null,
+    canTurn(node) ? create(node.dy, -node.dx, 1) : null,
+  ].filter(Boolean);
 }
-function part1(map: number[][]): number {
-  const results = [];
-  const queue: Node[] = [
-    { x: 0, y: 0, dx: 1, dy: 0, steps: 0, heat: 0 }, // Start at top-left, moving right
-  ];
-  const visited = new Map<string, number>();
 
+function findMinPath(
+  grid: Grid,
+  canContinue = (n: Node) => true,
+  canTurn = (n: Node) => true
+): number {
+  const [width, height] = [grid[0].length - 1, grid.length - 1];
+  const previousHeats = new Map<string, number>();
+  const queue = new PriorityQueue({
+    comparator: (a, b) => a.heat - b.heat,
+    initialValues: [
+      { x: 0, y: 0, dx: 1, dy: 0, steps: 0, heat: 0 },
+      { x: 0, y: 0, dx: 0, dy: 1, steps: 0, heat: 0 },
+    ],
+  });
   while (queue.length > 0) {
-    const node = queue.shift()!;
+    const node = queue.dequeue();
     const key = `${node.x},${node.y},${node.dx},${node.dy},${node.steps}`;
-
-    if (visited.has(key) && visited.get(key)! <= node.heat) continue;
-    visited.set(key, node.heat);
-
-    if (node.x === map[0].length - 1 && node.y === map.length - 1) {
-      // Reached the destination
-      results.push(node.heat);
-    }
-
-    const nextSteps = getNextSteps(node, map);
-    queue.push(...nextSteps);
-    queue.sort((a, b) => a.heat - b.heat); // Turn the queue into a priority queue
+    if (previousHeats.get(key) <= node.heat) continue;
+    previousHeats.set(key, node.heat);
+    if (node.x === width && node.y === height && canTurn(node))
+      return node.heat;
+    const nextSteps = getNextSteps(node, grid, canContinue, canTurn);
+    nextSteps.forEach((n) => queue.queue(n));
   }
 
-  console.log(results);
-  return min(results);
+  throw new Error("No solution found");
 }
 
-function part2(values: any[]): any[] {
-  function func2(a) {
-    return a;
-  }
+function part1(grid: Grid): number {
+  const canContinue = (n) => n.steps < 3;
+  return findMinPath(grid, canContinue);
+}
 
-  const out1 = func2(values[0]);
-
-  console.log(out1);
-
-  return values.map(func2);
+function part2(grid: Grid): number {
+  const canContinue = (n) => n.steps < 10;
+  const canTurn = (n) => n.steps >= 4;
+  return findMinPath(grid, canContinue, canTurn);
 }
 
 solve({
-  parser: (input) =>
-    input.split("\n").map((line) => line.split("").map(Number)),
-  part1: part1,
-  // part2: part2,
+  parser: (input) => input.split("\n").map((l) => l.split("").map(Number)),
+  part1,
+  part2,
   testInput:
     "2413432311323\n3215453535623\n3255245654254\n3446585845452\n4546657867536\n1438598798454\n4457876987766\n3637877979653\n4654967986887\n4564679986453\n1224686865563\n2546548887735\n4322674655533",
-  part1Tests: [
-    [, 102],
-    // ["a", 0],
-  ],
+  part1Tests: [[, 102]],
   part2Tests: [
-    // ["aaa", 0],
-    // ["a", 0],
+    [, 94],
+    [
+      "111111111111\n999999999991\n999999999991\n999999999991\n999999999991",
+      71,
+    ],
   ],
 });

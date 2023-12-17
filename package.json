@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "dotenv": "^16.0.3",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "ts-priority-queue": "^0.1.1"
   },
   "devDependencies": {
     "@tsconfig/node18": "^18.2.2",
