@@ -12,6 +12,7 @@ type SolveArgs<T, TResult1, TResult2> = {
   part1Tests?: [string | null, TResult1][];
   part2?: (input: T, isTest?: boolean) => TResult2;
   part2Tests?: [string | null, TResult2][];
+  onlyTests?: boolean;
 };
 
 type Solutions = {
@@ -30,12 +31,13 @@ function read(fileName: string): string {
 }
 
 export async function solve<T, TResult1, TResult2>({
+  parser = (x) => x as T,
   part1,
   part1Tests,
   part2,
   testInput,
   part2Tests,
-  parser = (x) => x as T,
+  onlyTests = false,
 }: SolveArgs<T, TResult1, TResult2>) {
   const dir = dirname(caller());
   const day = dir.replace(/.*day/, "");
@@ -60,7 +62,7 @@ export async function solve<T, TResult1, TResult2>({
       `${tests.length || "NO"} tests passed for day ${day} part ${part}`
     );
 
-    // continue;
+    if (onlyTests) continue;
     const input = parser(read(`${dir}/input.txt`));
     const answer = solver(input, false)?.toString();
 

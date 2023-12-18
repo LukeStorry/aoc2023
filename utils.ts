@@ -9,7 +9,7 @@ type Node = { x: number; y: number };
 
 export function printGrid(
   grid: Grid,
-  highlight: Point | Node[],
+  highlight: Point[] | Node[],
   current?: Point
 ) {
   const highlightHash = highlight.map((h) => {
@@ -29,7 +29,7 @@ export function printGrid(
   const asString = grid.map((line, y) => lineToStr(line, y)).join("\n");
 
   console.log();
-  console.clear();
+  // console.clear();
   console.log(asString);
   console.log();
 }
