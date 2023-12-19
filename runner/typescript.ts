@@ -59,7 +59,7 @@ export async function solve<T, TResult1, TResult2>({
       }
     }
     console.log(
-      `${tests.length || "NO"} tests passed for day ${day} part ${part}`
+      `${tests?.length || "NO"} tests passed for day ${day} part ${part}`
     );
 
     if (onlyTests) continue;
