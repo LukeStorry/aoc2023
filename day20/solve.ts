@@ -1,18 +1,6 @@
 import { solve } from "../runner/typescript";
-import {
-  max,
-  sum,
-  groupBy,
-  fromPairs,
-  every,
-  values,
-  tail,
-  keys,
-  multiply,
-} from "lodash";
+import { fromPairs, every, values, keys } from "lodash";
 import { lowestCommonMultiple } from "../utils";
-
-type Parsed = {};
 
 type Module = {
   name: string;
@@ -25,7 +13,7 @@ type Module = {
     }
   | {
       type: "conjunction";
-      memory: { [key: string]: boolean }; // high = true, low = false
+      memory: { [key: string]: boolean };
     }
 );
 
@@ -41,27 +29,25 @@ function createModule(line: string): Module {
     name = name.slice(1);
     return { name, type: "conjunction", destinations, memory: {} };
   }
+
   return { name, type: "broadcast", destinations };
 }
 
 type ModuleMap = { [name: string]: Module };
 
 function parser(input: string): ModuleMap {
-  const allModules = input.split("\n").map<Module>(createModule);
-  // Initialise the memory arrays
+  const allModules = input.split("\n").map(createModule);
+  // Initialise the memories with all incoming connections
   allModules.forEach((module) => {
     if (module.type !== "conjunction") return;
-    const incoming = allModules
-      .filter(({ destinations: d }) => d.includes(module.name))
-      .map(({ name }) => [name, false]);
-    module.memory = fromPairs(incoming);
+    const incoming = allModules.filter(({ destinations: d }) =>
+      d.includes(module.name)
+    );
+    const incoming2 = incoming.map(({ name }) => [name, false]);
+    module.memory = fromPairs(incoming2);
   });
-  return fromPairs(allModules.map((module) => [module.name, module]));
-}
 
-function part1(moduleMap: ModuleMap): number {
-  const [highs, lows] = run(moduleMap, 1000);
-  return highs * lows;
+  return fromPairs(allModules.map((module) => [module.name, module]));
 }
 
 function run(
@@ -70,23 +56,23 @@ function run(
   monitorHighPulseCycle?: string
 ) {
   let [highs, lows, buttonPresses] = [0, 0, 0];
-  const pulseQueue: [string, string, boolean][] = [];
+  const pulseQueue: { from: string; to: string; isHigh: boolean }[] = [];
   let monitorHighPulseCycleStart: number;
 
   while (buttonPresses <= maxButtonPresses) {
     if (!pulseQueue.length) {
       buttonPresses++;
-      pulseQueue.push(["button", "broadcaster", false]);
+      pulseQueue.push({ from: "button", to: "broadcaster", isHigh: false });
       continue;
     }
-    const [from, to, isHigh] = pulseQueue.shift();
+    const { from, to, isHigh } = pulseQueue.shift();
 
-    if (isHigh) highs += 1;
-    if (!isHigh) lows += 1;
+    highs += isHigh ? 1 : 0;
+    lows += isHigh ? 0 : 1;
 
     const module = moduleMap[to];
     if (!module) continue;
-    
+
     let sendHigh;
     if (module.type === "flip-flop") {
       if (isHigh) continue;
@@ -99,25 +85,30 @@ function run(
       sendHigh = isHigh;
     }
 
+    module.destinations.forEach((to) =>
+      pulseQueue.push({ from: module.name, to, isHigh: sendHigh })
+    );
+
     if (module.name == monitorHighPulseCycle && sendHigh) {
       if (monitorHighPulseCycleStart)
         return [monitorHighPulseCycleStart, buttonPresses];
       else monitorHighPulseCycleStart = buttonPresses;
     }
-
-    module.destinations.forEach((to) =>
-      pulseQueue.push([module.name, to, sendHigh])
-    );
   }
   return [highs, lows];
 }
 
+function part1(moduleMap: ModuleMap): number {
+  const [highs, lows] = run(moduleMap, 1000);
+  return highs * lows;
+}
+
 function part2(moduleMap: ModuleMap): number {
-  const final = values(moduleMap).find(({ destinations }) =>
-    destinations.includes("rx")
+  const final = values(moduleMap).find((module) =>
+    module.destinations.includes("rx")
   );
   if (!final || final.type !== "conjunction")
-    throw new Error("No final conjunction");
+    throw new Error("No final conjunction!?");
 
   const triggerCycles = keys(final.memory)
     .map((trigger) => run(moduleMap, Infinity, trigger))
