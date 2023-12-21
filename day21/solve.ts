@@ -1,3 +1,4 @@
+import { floor } from "lodash";
 import { solve } from "../runner/typescript";
 import { printGrid } from "../utils";
 
@@ -18,14 +19,19 @@ function getNext([x, y]: Point, grid: Grid): Point[] {
   });
 }
 function walkGarden(grid: Grid, maxSteps: number): number {
-  const start = grid
+  const starts = grid
     .flatMap((row, y) => row.map((cell, x) => (cell === "S" ? [x, y] : null)))
-    .find(Boolean);
+    .filter(Boolean);
+  const start = starts[floor(starts.length / 2)];
 
   let queue: [Point, number][] = [[start, 0]];
   let visited = new Set<string>();
   let finalSpots = new Set<string>();
   while (queue.length) {
+    if (visited.size > 20000) {
+      printGrid(grid, [...visited].map((v) => v.split(",").map(Number)) as any);
+      return 0;
+    }
     const [current, steps] = queue.shift();
     const visitedHash = `${current},${steps}`;
     if (visited.has(visitedHash)) continue;
@@ -49,7 +55,17 @@ function part1(grid: Grid, isTest: boolean): number {
 
 function part2(grid: Grid, isTest: boolean): number {
   const steps = isTest ? 100 : 26501365;
-  return walkGarden(grid, steps);
+
+  const multiplier = isTest ? 15 : 3;
+  const bigGrid = Array(multiplier)
+    .fill(grid)
+    .flat()
+    .map((row) => Array(multiplier).fill(row).flat());
+
+  const newLocal = walkGarden(bigGrid, steps);
+
+  throw new Error("Not finished");
+  return newLocal;
 }
 
 solve({
@@ -58,7 +74,7 @@ solve({
   testInput:
     "...........\n.....###.#.\n.###.##..#.\n..#.#...#..\n....#.#....\n.##..S####.\n.##..#...#.\n.......##..\n.##.#.####.\n.##..##.##.\n...........",
   part2,
-  onlyTests: true,
-  part1Tests: [[, 16]],
-  part2Tests: [[, 6536]],
+  // onlyTests: true,
+  // part1Tests: [[, 16]],
+  // part2Tests: [[, 6536]],
 });
