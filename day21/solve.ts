@@ -5,14 +5,23 @@ type Grid = string[][];
 type Point = [number, number] | number[];
 
 function getNext([x, y]: Point, grid: Grid): Point[] {
+  const [width, height] = [grid[0].length, grid.length];
+  const wrap = (a, b) => ((a % b) + b) % b;
   return [
     [x, y - 1],
     [x, y + 1],
     [x + 1, y],
     [x - 1, y],
-  ].filter(([x, y]) => ".S".includes(grid[y]?.[x]));
+  ].filter(([x, y]) => {
+    const cell = grid[wrap(y, height)][wrap(x, width)];
+    return ".S".includes(cell);
+  });
 }
-function walkGarden(grid: Grid, start: Point, maxSteps: number): number {
+function walkGarden(grid: Grid, maxSteps: number): number {
+  const start = grid
+    .flatMap((row, y) => row.map((cell, x) => (cell === "S" ? [x, y] : null)))
+    .find(Boolean);
+
   let queue: [Point, number][] = [[start, 0]];
   let visited = new Set<string>();
   let finalSpots = new Set<string>();
@@ -34,27 +43,22 @@ function walkGarden(grid: Grid, start: Point, maxSteps: number): number {
 }
 function part1(grid: Grid, isTest: boolean): number {
   const steps = isTest ? 6 : 64;
-  const start = grid
-    .flatMap((row, y) => row.map((cell, x) => (cell === "S" ? [x, y] : null)))
-    .find(Boolean);
 
-  return walkGarden(grid, start, steps);
+  return walkGarden(grid, steps);
+}
+
+function part2(grid: Grid, isTest: boolean): number {
+  const steps = isTest ? 100 : 26501365;
+  return walkGarden(grid, steps);
 }
 
 solve({
   parser: (input) => input.split("\n").map((line) => line.split("")) as Grid,
-  part1,
-  testInput: `.|...\\....\n|.-.\\.....\n.....|-...\n........|.\n..........\n.........\\\n..../.\\\\..\n.-.-/..|..\n.|....-|.\\\n..//.|....`,
-  // part2,
-  part1Tests: [
-    [
-      "...........\n.....###.#.\n.###.##..#.\n..#.#...#..\n....#.#....\n.##..S####.\n.##..#...#.\n.......##..\n.##.#.####.\n.##..##.##.\n...........",
-      16,
-    ],
-    // ["a", 0],
-  ],
-  part2Tests: [
-    // ["aaa", 0],
-    // ["a", 0],
-  ],
+  // part1,
+  testInput:
+    "...........\n.....###.#.\n.###.##..#.\n..#.#...#..\n....#.#....\n.##..S####.\n.##..#...#.\n.......##..\n.##.#.####.\n.##..##.##.\n...........",
+  part2,
+  onlyTests: true,
+  part1Tests: [[, 16]],
+  part2Tests: [[, 6536]],
 });
