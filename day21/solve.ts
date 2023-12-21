@@ -1,80 +1,171 @@
-import { floor } from "lodash";
+import { countBy, fromPairs, groupBy, sum, toPairs, values, zip } from "lodash";
 import { solve } from "../runner/typescript";
-import { printGrid } from "../utils";
 
-type Grid = string[][];
 type Point = [number, number] | number[];
+type MultiGridPoint = { pointInGrid: Point; gridOffset: Point };
+type Data = {
+  width: number;
+  height: number;
+  start: MultiGridPoint;
+  graph: Record<string, Point[]>;
+};
 
-function getNext([x, y]: Point, grid: Grid): Point[] {
-  const [width, height] = [grid[0].length, grid.length];
-  const wrap = (a, b) => ((a % b) + b) % b;
-  return [
-    [x, y - 1],
-    [x, y + 1],
-    [x + 1, y],
-    [x - 1, y],
-  ].filter(([x, y]) => {
-    const cell = grid[wrap(y, height)][wrap(x, width)];
-    return ".S".includes(cell);
-  });
-}
-function walkGarden(grid: Grid, maxSteps: number): number {
-  const starts = grid
-    .flatMap((row, y) => row.map((cell, x) => (cell === "S" ? [x, y] : null)))
+function parser(input: string): Data {
+  const grid: string[][] = input.split("\n").map((row) => row.split(""));
+  const start = grid
+    .flatMap((row, y) =>
+      row.map((cell, x) =>
+        cell == "S"
+          ? ({
+              pointInGrid: [x, y],
+              gridOffset: [0, 0],
+            } satisfies MultiGridPoint)
+          : null
+      )
+    )
+    .find(Boolean);
+
+  const cellsWithConnections = grid
+    .flatMap((row, y) =>
+      row.map((cell, x) => {
+        if (cell == "#") return null;
+        const connections = zip([-1, 0, 1, 0], [0, -1, 0, 1])
+          .map(([dx, dy]) => [x + dx, y + dy] satisfies Point)
+          .filter(([nx, ny]) => "S.".includes(grid[ny]?.[nx]));
+        return [`${x},${y}`, connections];
+      })
+    )
     .filter(Boolean);
-  const start = starts[floor(starts.length / 2)];
 
-  let queue: [Point, number][] = [[start, 0]];
-  let visited = new Set<string>();
-  let finalSpots = new Set<string>();
-  while (queue.length) {
-    if (visited.size > 20000) {
-      printGrid(grid, [...visited].map((v) => v.split(",").map(Number)) as any);
-      return 0;
-    }
-    const [current, steps] = queue.shift();
-    const visitedHash = `${current},${steps}`;
-    if (visited.has(visitedHash)) continue;
-    visited.add(visitedHash);
-    if (steps === maxSteps) {
-      finalSpots.add(`${current}`);
-      continue;
-    }
-    const next = getNext(current, grid);
+  return {
+    start,
+    width: grid[0].length,
+    height: grid.length,
+    graph: fromPairs(cellsWithConnections),
+  };
+}
 
-    queue.push(...next.map((v) => [v, steps + 1] as any));
+function finalDestinations(
+  { graph, width, height, start }: Data,
+  steps: number
+): MultiGridPoint[] {
+  // keys work as a Set, but with cheap access to full object.
+  let points = { [`${start.gridOffset}|${start.pointInGrid}`]: start };
+
+  for (let i = 0; i < steps; i++) {
+    const nextPoints = values(points).flatMap(
+      ({ pointInGrid: [x, y], gridOffset: [offsetX, offsetY] }) => {
+        const sameGrid: MultiGridPoint[] = graph[`${x},${y}`].map(
+          (neighbor) => ({
+            pointInGrid: neighbor,
+            gridOffset: [offsetX, offsetY],
+          })
+        );
+
+        const nextGrid: MultiGridPoint[] = [
+          x === 0
+            ? {
+                pointInGrid: [width - 1, y],
+                gridOffset: [offsetX - 1, offsetY],
+              }
+            : null,
+          x === width - 1
+            ? {
+                pointInGrid: [0, y],
+                gridOffset: [offsetX + 1, offsetY],
+              }
+            : null,
+          y === 0
+            ? {
+                pointInGrid: [x, height - 1],
+                gridOffset: [offsetX, offsetY - 1],
+              }
+            : null,
+          y === height - 1
+            ? {
+                pointInGrid: [x, 0],
+                gridOffset: [offsetX, offsetY + 1],
+              }
+            : null,
+        ].filter(Boolean);
+
+        const result = [...sameGrid, ...nextGrid];
+        return result;
+      }
+    );
+
+    points = fromPairs(
+      nextPoints.map((p) => [
+        `${p.pointInGrid.map(Number)}|${p.gridOffset.map(Number)}`,
+        p,
+      ])
+    );
   }
 
-  return finalSpots.size;
+  return values(points);
 }
-function part1(grid: Grid, isTest: boolean): number {
+
+function part1(data: Data, isTest: boolean) {
   const steps = isTest ? 6 : 64;
-
-  return walkGarden(grid, steps);
+  const visited = finalDestinations(data, steps);
+  return visited.length;
 }
 
-function part2(grid: Grid, isTest: boolean): number {
-  const steps = isTest ? 100 : 26501365;
+function part2(data: Data, isTest: boolean) {
+  const steps = isTest ? 5000 : 26501365;
+  const repeats = Math.floor(steps / data.width);
+  const hopefullyEnoughSteps = data.width * 2 + (steps % data.width);
 
-  const multiplier = isTest ? 15 : 3;
-  const bigGrid = Array(multiplier)
-    .fill(grid)
-    .flat()
-    .map((row) => Array(multiplier).fill(row).flat());
+  const visited = finalDestinations(data, hopefullyEnoughSteps);
 
-  const newLocal = walkGarden(bigGrid, steps);
+  const gridCounts = fromPairs(
+    toPairs(groupBy(visited, ({ gridOffset: [_, y] }) => y)).map(
+      ([offsetY, values]) => [
+        offsetY,
+        countBy(values, ({ gridOffset: [x, _] }) => x),
+      ]
+    )
+  );
 
-  throw new Error("Not finished");
-  return newLocal;
+  const corners = [
+    gridCounts[-2][0],
+    gridCounts[2][0],
+    gridCounts[0][-2],
+    gridCounts[0][2],
+  ];
+
+  const mostlyEmptyEdges = [
+    gridCounts[-2][-1],
+    gridCounts[-2][1],
+    gridCounts[2][-1],
+    gridCounts[2][1],
+  ];
+
+  const mostlyFullEdges = [
+    gridCounts[-1][-1],
+    gridCounts[-1][1],
+    gridCounts[1][-1],
+    gridCounts[1][1],
+  ];
+
+  const evenFullGrids = gridCounts[0][0];
+  const oddFullGrids = gridCounts[0][1];
+
+  return (
+    sum(corners) +
+    sum(mostlyEmptyEdges) * repeats +
+    sum(mostlyFullEdges) * (repeats - 1) +
+    oddFullGrids * repeats ** 2 +
+    evenFullGrids * (repeats - 1) ** 2
+  );
 }
 
 solve({
-  parser: (input) => input.split("\n").map((line) => line.split("")) as Grid,
-  // part1,
+  parser,
+  part1,
   testInput:
     "...........\n.....###.#.\n.###.##..#.\n..#.#...#..\n....#.#....\n.##..S####.\n.##..#...#.\n.......##..\n.##.#.####.\n.##..##.##.\n...........",
   part2,
-  // onlyTests: true,
-  // part1Tests: [[, 16]],
-  // part2Tests: [[, 6536]],
+  part1Tests: [[, 16]],
+  // part2Tests: [[, 16733044]],
 });
