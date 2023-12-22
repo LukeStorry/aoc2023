@@ -34,24 +34,18 @@ def fall(brick: Brick, stable: set[Point]) -> Brick:
 
 
 def run(input):
-  bricks, stable = parse(input), set()
-  bricks = [fall(brick, stable) for brick in bricks]
+  bricks, stable, falls = parse(input), set(), []
+  bricks = [fall(b, stable) for b in bricks]
 
-  disintegratable, totalFalls = set(range(len(bricks))), 0
+  falls = [
+    brick_index
+    for brick_index, brick in enumerate(bricks)
+    if (stable := {p for b in bricks for p in b if b != brick})
+    for other_brick in bricks[brick_index + 1 :]
+    if other_brick != fall(other_brick, stable)
+  ]
 
-  for brick_index, brick in enumerate(bricks):
-    stable_backup = set(stable)
-    stable -= brick
-    for other_brick in bricks[brick_index + 1 :]:
-      stable -= other_brick
-      if other_brick != fall(other_brick, stable):
-        disintegratable.discard(brick_index)
-        totalFalls += 1
-
-    # Restore
-    stable = stable_backup
-
-  return len(disintegratable), totalFalls
+  return len(bricks) - len(set(falls)), len(falls)
 
 
 def part1(input: str) -> int:
