@@ -40,7 +40,7 @@ def solve(
         else:
             print(f"Part 2: Right test answer! Got {test_2_answer}")
 
-    attempt(str(part2(input_text)), 2, dir)
+    attempt(part2(input_text), 2, dir)
 
 
 def get_session():
@@ -69,7 +69,7 @@ def attempt(solution, part, dir):
     solutions = json.loads(open(dir + "/solutions.json").read())
     solution_part = solutions[f"part{part}"]
     if solution_part["correctSolution"]:
-        if solution_part["correctSolution"] == str(solution):
+        if str(solution_part["correctSolution"]) == str(solution):
             print(f"Part {part} correct {solution}!")
             return True
         else:
