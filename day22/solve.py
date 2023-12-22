@@ -1,11 +1,4 @@
 from re import findall
-
-from pathlib import Path
-from sys import path as syspath
-
-parent = Path(__file__).parent.parent
-syspath.append(str(parent))
-
 from runner.python import solve
 
 
@@ -30,13 +23,8 @@ def parse(input: str) -> list[Brick]:
   ]
 
 
-def fall(
-  brick: Brick,
-  stable: set[Point],
-  unstable: set[Point],
-) -> Brick:
+def fall(brick: Brick, stable: set[Point]) -> Brick:
   stable -= brick
-  unstable -= brick
   while True:
     fallen = {(x, y, z - 1) for x, y, z in brick}
     if len(fallen & stable) or any(z < 1 for _, _, z in fallen):
@@ -46,25 +34,24 @@ def fall(
 
 
 def run(input):
-  bricks = parse(input)
-  stable, unstable = set(), {b for brick in bricks for b in brick}
-  bricks = [fall(brick, stable, unstable) for brick in bricks]
+  bricks, stable = parse(input), set()
+  bricks = [fall(brick, stable) for brick in bricks]
 
-  safe_to_remove, totalFalls = set(range(len(bricks))), 0
+  disintegratable, totalFalls = set(range(len(bricks))), 0
 
   for brick_index, brick in enumerate(bricks):
     stable_backup = set(stable)
     stable -= brick
     for other_brick in bricks[brick_index + 1 :]:
       stable -= other_brick
-      if other_brick != fall(other_brick, stable, unstable):
-        safe_to_remove.remove(brick_index)
+      if other_brick != fall(other_brick, stable):
+        disintegratable.discard(brick_index)
         totalFalls += 1
 
     # Restore
     stable = stable_backup
 
-  return len(safe_to_remove), totalFalls
+  return len(disintegratable), totalFalls
 
 
 def part1(input: str) -> int:
