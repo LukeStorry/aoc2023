@@ -10,6 +10,7 @@ import {
   intersectionWith,
   min,
   sumBy,
+  difference,
 } from "lodash";
 
 type Point = [number, number, number];
@@ -52,7 +53,10 @@ function fallToFloor(bricks: Brick[], earlyReturn?: boolean): Brick[] {
   );
 
   for (let brick of sortedBricks) {
-    brick.forEach(([x, y, z]) => allBrickPositions.delete(`${x},${y},${z}`));
+    const originalPositions = new Set(
+      brick.map(([x, y, z]) => `${x},${y},${z}`)
+    );
+    originalPositions.forEach((pos) => allBrickPositions.delete(pos));
     while (min(brick.map(([_, __, z]) => z)) > 1) {
       const oneStepLower: Brick = brick.map(([x, y, z]) => [x, y, z - 1]);
       const collision = oneStepLower.some(([x, y, z]) =>
@@ -98,48 +102,57 @@ function part1(bricks: Brick[]): number {
 }
 
 function part2(bricks: Brick[]): number {
-  console.log(bricks);
+  // console.log(bricks);
   const settled = fallToFloor(fallToFloor(fallToFloor(bricks)));
 
-  let canRemove = 0;
+  let fallen = 0;
 
   for (let i = 0; i < settled.length; i++) {
     if (i % 10 === 0) console.log(`${i}/${settled.length}`);
     const remainingBricks = [...settled.slice(0, i), ...settled.slice(i + 1)];
-    const afterFall = fallToFloor(remainingBricks);
+    const afterFall = fallToFloor(
+      fallToFloor(
+        fallToFloor(
+          fallToFloor(
+            fallToFloor(
+              fallToFloor(
+                fallToFloor(
+                  fallToFloor(
+                    fallToFloor(
+                      fallToFloor(
+                        fallToFloor(
+                          fallToFloor(fallToFloor(fallToFloor(remainingBricks)))
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    );
 
-    // const hash = (bricks: Brick[]) =>
-    //   // bricks.map((b) => b.map(([x, y, z]) => `${x},${y},${z}`)).join("|");
-    //   sumBy(bricks, (b) => sumBy(b, (c) => sum(c)));
+    const hash = (bricks: Brick[]) =>
+      bricks.map((b) => b.map(([x, y, z]) => `${x},${y},${z}`).join("|"));
+    // sumBy(bricks, (b) => sumBy(b, (c) => sum(c)));
 
-    // const aft = hash(afterFall);
-    // const fore = hash(remainingBricks);
+    const aft = hash(afterFall);
+    const fore = hash(remainingBricks);
+    const dd = difference(aft, fore);
+    const diff = dd.length;
 
-    if (afterFall.length > 1) {
-      // if (aft == fore) {
-      canRemove++;
-    }
+    fallen += diff;
   }
 
-  return canRemove;
+  return fallen;
 }
-
-// function part2(values: any[]): any[] {
-//   function func2(a) {
-//     return a;
-//   }
-
-//   const out1 = func2(values[0]);
-
-//   console.log(out1);
-
-//   return values.map(func2);
-// }
 
 solve({
   parser: parser,
   part1: part1,
-  // part2: part2,
+  part2: part2,
 
   part1Tests: [
     [
