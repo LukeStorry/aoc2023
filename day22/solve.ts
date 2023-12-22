@@ -8,6 +8,8 @@ import {
   minBy,
   isEqual,
   intersectionWith,
+  min,
+  sumBy,
 } from "lodash";
 
 type Point = [number, number, number];
@@ -37,50 +39,84 @@ function parser(input: string): Brick[] {
   });
 }
 
-function fallToFloor(bricks: Brick[]): Brick[] {
-  // Because the snapshot was taken while the bricks were still falling, some bricks will still be in the air; you'll need to start by figuring out where they will end up. Bricks are magically stabilized, so they never rotate, even in weird situations like where a long horizontal brick is only supported on one end. Two bricks cannot occupy the same position, so a falling brick will come to rest upon the first other brick it encounters.
-
-  //We want to return the list of bricks where all the bricks have fallen
+function fallToFloor(bricks: Brick[], earlyReturn?: boolean): Brick[] {
   const sortedBricks = orderBy(
     bricks,
-    [(brick) => minBy(brick, ([x, y, z]) => z)],
-    ["desc"]
+    // [(brick) => minBy(brick, ([x, y, z]) => z)],
+    [(brick) => min(brick.map(([x, y, z]) => z))]
+    // ["desc"]
   );
   const finalBricks: Brick[] = [];
+  const allBrickPositions = new Set(
+    bricks.flatMap((b) => b.map(([x, y, z]) => `${x},${y},${z}`))
+  );
 
-  sortedBricks.forEach((brick) => {
-    let lowestZ = minBy(brick, ([x, y, z]) => z)[2];
-    while (lowestZ > 0) {
+  for (let brick of sortedBricks) {
+    brick.forEach(([x, y, z]) => allBrickPositions.delete(`${x},${y},${z}`));
+    while (min(brick.map(([_, __, z]) => z)) > 1) {
       const oneStepLower: Brick = brick.map(([x, y, z]) => [x, y, z - 1]);
-      if (
-        finalBricks.some(
-          (otherBrick) =>
-            intersectionWith(oneStepLower, otherBrick, isEqual).length > 0
-        )
-      ) {
-        break;
-      }
+      const collision = oneStepLower.some(([x, y, z]) =>
+        allBrickPositions.has(`${x},${y},${z}`)
+      );
+      if (collision) break;
+      if (earlyReturn) return [];
+
       brick = oneStepLower;
-      lowestZ--;
     }
+    brick.forEach(([x, y, z]) => allBrickPositions.add(`${x},${y},${z}`));
     finalBricks.push(brick);
-  });
+  }
 
   return finalBricks;
 }
 
 function part1(bricks: Brick[]): number {
   console.log(bricks);
-  const settled = fallToFloor(bricks);
+  const settled = fallToFloor(fallToFloor(fallToFloor(bricks)));
 
   let canRemove = 0;
 
   for (let i = 0; i < settled.length; i++) {
-    console.log(i);
+    if (i % 10 === 0) console.log(`${i}/${settled.length}`);
+    const remainingBricks = [...settled.slice(0, i), ...settled.slice(i + 1)];
+    const afterFall = fallToFloor(remainingBricks, true);
+
+    // const hash = (bricks: Brick[]) =>
+    //   // bricks.map((b) => b.map(([x, y, z]) => `${x},${y},${z}`)).join("|");
+    //   sumBy(bricks, (b) => sumBy(b, (c) => sum(c)));
+
+    // const aft = hash(afterFall);
+    // const fore = hash(remainingBricks);
+
+    if (afterFall.length > 1) {
+      // if (aft == fore) {
+      canRemove++;
+    }
+  }
+
+  return canRemove;
+}
+
+function part2(bricks: Brick[]): number {
+  console.log(bricks);
+  const settled = fallToFloor(fallToFloor(fallToFloor(bricks)));
+
+  let canRemove = 0;
+
+  for (let i = 0; i < settled.length; i++) {
+    if (i % 10 === 0) console.log(`${i}/${settled.length}`);
     const remainingBricks = [...settled.slice(0, i), ...settled.slice(i + 1)];
     const afterFall = fallToFloor(remainingBricks);
 
-    if (isEqual(afterFall, remainingBricks)) {
+    // const hash = (bricks: Brick[]) =>
+    //   // bricks.map((b) => b.map(([x, y, z]) => `${x},${y},${z}`)).join("|");
+    //   sumBy(bricks, (b) => sumBy(b, (c) => sum(c)));
+
+    // const aft = hash(afterFall);
+    // const fore = hash(remainingBricks);
+
+    if (afterFall.length > 1) {
+      // if (aft == fore) {
       canRemove++;
     }
   }
@@ -110,10 +146,11 @@ solve({
       "1,0,1~1,2,1\n0,0,2~2,0,2\n0,2,3~2,2,3\n0,0,4~0,2,4\n2,0,5~2,2,5\n0,1,6~2,1,6\n1,1,8~1,1,9",
       5,
     ],
-    // ["a", 0],
   ],
   part2Tests: [
-    // ["aaa", 0],
-    // ["a", 0],
+    [
+      "1,0,1~1,2,1\n0,0,2~2,0,2\n0,2,3~2,2,3\n0,0,4~0,2,4\n2,0,5~2,2,5\n0,1,6~2,1,6\n1,1,8~1,1,9",
+      7,
+    ],
   ],
 });
