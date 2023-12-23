@@ -1,51 +1,65 @@
 import { solve } from "../runner/typescript";
-import { max, values } from "lodash";
-type Point = [number, number];
+import { maxBy, values } from "lodash";
 type Grid = string[][];
-
+type Node = [number, number, number];
+type Graph = { [key: string]: Node[] };
 const directions = { "^": [0, -1], ">": [1, 0], v: [0, 1], "<": [-1, 0] };
 
-function findLongest(grid: Grid, slippery: boolean): number {
-  const start = [grid[0].indexOf("."), 0] satisfies Point;
-  const end = [grid.at(-1).indexOf("."), grid.length - 1];
-  const possiblePaths = [];
+function makeGraph(grid: string[][], slippery: boolean): Graph {
+  const graph = {} as Graph;
+  grid.forEach((row, y) => {
+    row.forEach((cell, x) => {
+      if (cell === "#") return;
+      const deltas =
+        slippery && cell in directions
+          ? [directions[cell]]
+          : values(directions);
+      const next = deltas
+        .map(([dx, dy]) => [x + dx, y + dy])
+        .filter(([nx, ny]) => !!grid[ny]?.[nx] && grid[ny][nx] !== "#")
+        .map(([nx, ny]) => [nx, ny, 1] satisfies Node);
+      graph[`${x},${y}`] = next;
+    });
+  });
 
-  const queue: [Point, string][] = [[start, ""]];
+  return graph;
+}
+
+function findLongest(graph: Graph): number {
+  const end = maxBy(values(graph).flat(), ([_, y]) => y);
+  let longestPath = 0;
+
+  const queue: [number, number, number, string][] = [[1, 0, 0, ""]];
 
   while (queue.length) {
-    const [[x, y], visited] = queue.shift();
+    const [x, y, pathLength, visited] = queue.shift();
     if (x === end[0] && y === end[1]) {
-      const size = visited.split("|").length - 1;
-      possiblePaths.push(size);
-      console.log(size);
+      console.log(pathLength);
+      if (pathLength > longestPath) longestPath = pathLength;
       continue;
     }
-    const cell = grid[y][x];
-    const deltas =
-      slippery && cell in directions ? [directions[cell]] : values(directions);
 
-    const nextPoints = deltas
-      .map(([dx, dy]) => [x + dx, y + dy] satisfies Point)
-      .filter(([nx, ny]) => !!grid[ny]?.[nx] && grid[ny][nx] !== "#")
-      .filter(([nx, ny]) => !visited.includes(`|${nx},${ny}|`));
-
-    nextPoints.forEach(([x, y]) => {
-      queue.push([[x, y], `${visited}|${x},${y}`]);
-    });
+    graph[`${x},${y}`]
+      .filter(([nx, ny, _]) => !visited.includes(`|${nx},${ny}|`))
+      .forEach(([x, y, weight]) => {
+        queue.push([x, y, pathLength + weight, `${visited}|${x},${y}`]);
+      });
   }
-  return max(possiblePaths);
+  return longestPath;
 }
 
 function part1(grid: Grid): number {
-  return findLongest(grid, true);
+  const graph = makeGraph(grid, true);
+  return findLongest(graph);
 }
 
 function part2(grid: Grid): number {
-  return findLongest(grid, false);
+  const graph = makeGraph(grid, false);
+  return findLongest(graph);
 }
 
 solve({
-  parser: (input: string) => input.split("\n").map((row) => row.split("")),
+  parser: (input) => input.split("\n").map((row) => row.split("")),
   part1: part1,
   part2: part2,
 
