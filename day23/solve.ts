@@ -1,79 +1,70 @@
 import { solve } from "../runner/typescript";
-import { entries, fromPairs, maxBy, values } from "lodash";
-type Node = [number, number, number];
+import { fromPairs, keys, values } from "lodash";
+type Node = [string, number];
 type Graph = { [key: string]: Node[] };
-const directions = { "^": [0, -1], ">": [1, 0], v: [0, 1], "<": [-1, 0] };
 
-function makeGraph(input: string, canWalkUpSteep = false): Graph {
+const directionBySlope = { "^": [0, -1], ">": [1, 0], v: [0, 1], "<": [-1, 0] };
+
+function makeGraph(input: string, ignoreSlopes = false): Graph {
   const grid = input.split("\n").map((row) => row.split(""));
 
-  function getConnectionsForCell(x: number, y: number): [number, number][] {
-    const cell = grid[y][x];
+  function getConnectionsForCell([x, y]: [number, number]) {
+    const char = grid[y][x];
+    if (char == "#") return [];
     const deltas =
-      cell in directions && !canWalkUpSteep
-        ? [directions[cell]]
-        : values(directions);
+      char in directionBySlope && !ignoreSlopes
+        ? [directionBySlope[char]]
+        : values(directionBySlope);
+
     return deltas
-      .map(([dx, dy]) => [x + dx, y + dy])
-      .filter(([nx, ny]) => !!grid[ny]?.[nx] && grid[ny][nx] != "#")
-      .map(([nx, ny]) => [nx, ny]);
-  }
-  const cells = grid.flatMap((row, y) =>
-    row
-      .map((cell, x) => [x, y, cell] as const)
-      .filter(([_, __, cell]) => cell !== "#");
-      
-  const fullGraph = fromPairs(
-    cells
-        .map(([x, y]) => [`${x},${y}`, getConnectionsForCell(x, y)])
-    )
-  );
-
-  function followConnectionUntilNextJunction(
-    name: string,
-    oldConnection: [number, number]
-  ) {
-    let [nx, ny] = oldConnection;
-    let weight = 1;
-    const seen = new Set<string>([name]);
-    while (true) {
-      const name = `${nx},${ny}`;
-      let nextConnection = fullGraph[name];
-      if (nextConnection.length != 2) return [nx, ny, weight] satisfies Node;
-      [nx, ny] = nextConnection.find(([x, y]) => !seen.has(`${x},${y}`));
-      weight += 1;
-      seen.add(name);
-    }
+      .map(([dx, dy]) => [x + dx, y + dy] satisfies [number, number])
+      .filter(([nx, ny]) => !!grid[ny]?.[nx] && grid[ny][nx] != "#");
   }
 
-  // make new compressed graph of just junctions
-  const compressedGraph = fromPairs(
-    entries(fullGraph)
-      .filter(([_, connections]) => connections.length != 2)
-      .map(([name, connections]) => [
-        name,
-        connections.map((c) => followConnectionUntilNextJunction(name, c)),
-      ])
-  );
-  return compressedGraph;
+  const cellsWithConnections = grid
+    .flatMap((row, y) => row.map((_, x) => [x, y]))
+    .map((cell: [number, number]) => {
+      const name = String(cell);
+      const connections = getConnectionsForCell(cell);
+      if (connections.length == 0) return null;
+
+      // Optimise by compressing corridors - removing all nodes that have exactly two connections
+      if (connections.length == 2) return null;
+
+      const compressedConnections = connections.map((connection) => {
+        let weight = 1;
+        const seen = new Set([name]);
+        while (true) {
+          const connectionName = String(connection);
+          const nextConnections = getConnectionsForCell(connection);
+          if (nextConnections.length != 2)
+            return [connectionName, weight] satisfies Node;
+
+          connection = nextConnections.find((c) => !seen.has(String(c)));
+          weight += 1;
+          seen.add(connectionName);
+        }
+      });
+
+      return [name, compressedConnections];
+    });
+
+  return fromPairs(cellsWithConnections.filter(Boolean));
 }
 
 function findLongest(graph: Graph): number {
-  const end = maxBy(values(graph).flat(), ([_, y]) => y);
+  const [start, end] = [keys(graph).at(0), keys(graph).at(-1)];
   let longestPath = -1;
-  const queue: [Node, string[]][] = [[[1, 0, 0], []]];
+  const queue: [string, number, string[]][] = [[start, 0, []]];
   while (queue.length) {
-    const [[x, y, pathLength], visited] = queue.pop();
-
-    if (x === end[0] && y === end[1]) {
+    const [node, pathLength, visited] = queue.pop();
+    if (node == end) {
       longestPath = Math.max(longestPath, pathLength);
       continue;
     }
-
-    for (const [nx, ny, weight] of graph[`${x},${y}`]) {
-      const name = `${nx},${ny}`;
-      if (visited.includes(name)) continue;
-      queue.push([[nx, ny, pathLength + weight], visited.concat(name)]);
+    for (const [next, weight] of graph[node]) {
+      if (visited.includes(next)) continue;
+      queue.push([next, pathLength + weight, visited.concat(next)]);
     }
   }
   return longestPath;
