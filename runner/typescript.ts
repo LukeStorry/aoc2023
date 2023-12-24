@@ -1,4 +1,3 @@
-import caller from "caller";
 import { config } from "dotenv";
 import { readFileSync, writeFileSync } from "fs";
 import { dirname } from "path";
@@ -7,10 +6,10 @@ config();
 
 type SolveArgs<T, TResult1, TResult2> = {
   parser?: (input: string) => T;
-  part1?: (input: T, isTest?: boolean) => TResult1;
+  part1?: (input: T, isTest?: boolean) => TResult1 | Promise<TResult1>;
   testInput?: string;
   part1Tests?: [string | null, TResult1][];
-  part2?: (input: T, isTest?: boolean) => TResult2;
+  part2?: (input: T, isTest?: boolean) => TResult2 | Promise<TResult2>;
   part2Tests?: [string | null, TResult2][];
   onlyTests?: boolean;
 };
@@ -39,8 +38,8 @@ export async function solve<T, TResult1, TResult2>({
   part2Tests,
   onlyTests = false,
 }: SolveArgs<T, TResult1, TResult2>) {
-  const dir = dirname(caller());
-  const day = dir.replace(/.*day/, "");
+  const day = process.argv[2] ?? new Date().getDate().toString();
+  const dir = `day${day}/`;
 
   for (const [part, solver, tests] of [
     [1, part1, part1Tests],
@@ -50,8 +49,8 @@ export async function solve<T, TResult1, TResult2>({
 
     for (const [specificTestInput, testExpectedOutput] of tests || []) {
       const parsedTestInput = parser(specificTestInput ?? testInput);
-      const testOutput = solver(parsedTestInput, true)?.toString();
-      if (testOutput !== testExpectedOutput.toString()) {
+      let testOutput = await solver(parsedTestInput, true);
+      if (testOutput?.toString() !== testExpectedOutput.toString()) {
         console.error(
           `Test failed for day ${day} part ${part}:\nExpected\n${testExpectedOutput}\nGot\n${testOutput}\n`
         );
@@ -64,7 +63,7 @@ export async function solve<T, TResult1, TResult2>({
 
     if (onlyTests) continue;
     const input = parser(read(`${dir}/input.txt`));
-    const answer = solver(input, false)?.toString();
+    const answer = (await solver(input, false))?.toString();
 
     console.log(`Final answer: ${answer}`);
 
@@ -75,12 +74,12 @@ export async function solve<T, TResult1, TResult2>({
       solutionsFile[`part${part}`];
 
     const alreadyCorrectlySubmitted = correctSolution != null;
-    if (attemptedSolutions.includes(answer) || alreadyCorrectlySubmitted) {
+    if (attemptedSolutions.includes(answer.toString()) || alreadyCorrectlySubmitted) {
       if (!alreadyCorrectlySubmitted) {
         console.log("Incorrect previously tried answer");
       } else {
         const prefix =
-          answer === correctSolution ? "Matches" : "Does not match";
+          answer === correctSolution.toString() ? "Matches" : "Does not match";
         console.log(`${prefix} correctly submitted ${correctSolution}!`);
       }
       continue;
