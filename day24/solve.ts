@@ -17,13 +17,14 @@ function intersect(
   stoneB: HailStone,
   [min, max]: [number, number]
 ): boolean {
-  const slopeA = stoneA.dy / stoneA.dx;
-  const interceptA = stoneA.y - slopeA * stoneA.x;
-  const slopeB = stoneB.dy / stoneB.dx;
-  const interceptB = stoneB.y - slopeB * stoneB.x;
+  // convert to y = mx + b
+  const m1 = stoneA.dy / stoneA.dx;
+  const c1 = stoneA.y - m1 * stoneA.x;
+  const m2 = stoneB.dy / stoneB.dx;
+  const c2 = stoneB.y - m2 * stoneB.x;
 
-  const x = (interceptB - interceptA) / (slopeA - slopeB);
-  const y = x * slopeA + interceptA;
+  const x = (c2 - c1) / (m1 - m2);
+  const y = x * m1 + c1;
 
   const isInFutureA = x > stoneA.x == stoneA.dx > 0;
   const isInFutureB = x > stoneB.x == stoneB.dx > 0;

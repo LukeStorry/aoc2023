@@ -1,6 +1,6 @@
+import z3
 from re import findall
 from runner.python import solve
-import z3
 from itertools import combinations
 from collections import namedtuple
 
@@ -14,39 +14,34 @@ def parse(input: str) -> list[Hailstone]:
   ]
 
 
-def has_intersection(
-  stone_a: Hailstone, stone_b: Hailstone, min_val: int, max_val: int
+def intersects(
+  stone_1: Hailstone, stone_2: Hailstone, min_val: int, max_val: int
 ) -> bool:
-  slope_a = stone_a.dy / stone_a.dx
-  slope_b = stone_b.dy / stone_b.dx
+  # Convert into y=mx+c format
+  m1 = stone_1.dy / stone_1.dx
+  m2 = stone_2.dy / stone_2.dx
+  c1 = stone_1.y - m1 * stone_1.x
+  c2 = stone_2.y - m2 * stone_2.x
 
-  if slope_a == slope_b:
+  if m1 == m2:  # Parallel
     return False
 
-  intercept_a = stone_a.y - slope_a * stone_a.x
-  intercept_b = stone_b.y - slope_b * stone_b.x
+  x = (c2 - c1) / (m1 - m2)
+  y = m1 * x + c1
 
-  intersection_x = (intercept_b - intercept_a) / (slope_a - slope_b)
-  intersection_y = slope_a * intersection_x + intercept_a
+  in_future_1 = (x - stone_1.x) / stone_1.dx >= 0
+  in_future_2 = (x - stone_2.x) / stone_2.dx >= 0
+  is_inside_zone = min_val <= x <= max_val and min_val <= y <= max_val
 
-  future_a = (intersection_x - stone_a.x) / stone_a.dx >= 0
-  future_b = (intersection_x - stone_b.x) / stone_b.dx >= 0
-
-  is_inside_zone = (
-    min_val <= intersection_x <= max_val
-    and min_val <= intersection_y <= max_val
-  )
-
-  return future_a and future_b and is_inside_zone
+  return in_future_1 and in_future_2 and is_inside_zone
 
 
 def part1(input):
+  stones = parse(input)
   min = 7 if len(input) < 200 else 200000000000000
   max = 27 if len(input) < 200 else 400000000000000
-  hailstones = parse(input)
   return sum(
-    has_intersection(h1, h2, min, max)
-    for h1, h2 in combinations(hailstones, 2)
+    intersects(h1, h2, min, max) for h1, h2 in combinations(stones, 2)
   )
 
 
