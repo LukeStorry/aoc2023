@@ -1,5 +1,6 @@
 import { solve } from "../runner/typescript";
-import { fromPairs, zip } from "lodash";
+import { fromPairs, sum, zip } from "lodash";
+import { Context } from "z3-solver";
 
 const hailstoneKeys = ["x", "y", "z", "dx", "dy", "dz"] as const;
 type HailStone = { [key in (typeof hailstoneKeys)[number]]: number };
@@ -31,7 +32,7 @@ function intersect(
   return isInFutureA && isInFutureB && isInsideZone;
 }
 
-function part1(stones: HailStone[], isTest): number {
+function part1(stones: HailStone[], isTest) {
   const testArea: [number, number] = isTest
     ? [7, 27]
     : [200000000000000, 400000000000000];
@@ -46,16 +47,39 @@ function part1(stones: HailStone[], isTest): number {
   return intersections;
 }
 
+async function part2(stones: HailStone[]) {
+  const { init } = require('z3-solver');
+  const { Context } = await init();
+  const { Solver, Real } = new Context('main') as Context;
+
+  const solver = new Solver();
+
+  const position = Real.vector("position", 3);
+  const [dx, dy, dz] = Real.vector("velocity", 3);
+  const [x, y, z] = position;
+
+
+  stones.forEach((stone, index) => {
+    const time = Real.const(`time_${index}`);
+    solver.add(time.gt(0));
+    solver.add(x.add(time.mul(dx)).eq(time.mul(stone.dx).add(stone.x)));
+    solver.add(y.add(time.mul(dy)).eq(time.mul(stone.dy).add(stone.y)));
+    solver.add(z.add(time.mul(dz)).eq(time.mul(stone.dz).add(stone.z)));
+  });
+
+  await solver.check();
+  const positions = position.map(d =>
+    Number(solver.model().get(d))
+  );
+  return sum(positions);
+}
+
 solve({
-  parser: parser,
+  parser,
   part1,
-  // onlyTests: true,
-  // part2,
+  part2,
   testInput:
     "19, 13, 30 @ -2,  1, -2\n18, 19, 22 @ -1, -1, -2\n20, 25, 34 @ -2, -2, -4\n12, 31, 28 @ -1, -2, -1\n20, 19, 15 @  1, -5, -3",
   part1Tests: [[, 2]],
-  part2Tests: [
-    // ["aaa", 0],
-    // ["a", 0],
-  ],
+  part2Tests: [[, 47]],
 });
